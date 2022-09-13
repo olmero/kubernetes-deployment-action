@@ -1,0 +1,90 @@
+name: 'Deploy to kubernetes'
+description: 'Github action for deploying the latest tags to the deployment repository'
+inputs:
+  deployment_repository:
+    description: 'Name of the deployment repository.'
+    required: true
+  deployment_branch:
+    description: 'The name of the deployment branch.'
+    required: true
+  deployment_repository_token:
+    description: 'Token to use to access the deployment repository.'
+    required: true
+  values_file:
+    description: 'The helm values file to be updated'
+    required: true
+  values_path:
+    description: 'The path for the value to change'
+    required: false
+    default: 'image.tag'
+  docker_tag:
+    description: 'The tag to apply for the new docker image'
+    required: true
+  commit_message:
+    description: 'The commit message'
+    required: true
+  author_email:
+    required: true
+    description: 'The email of the author of the commit'
+  author_name:
+    required: true
+    description: 'The name of the author of the commit'
+  additional_values_file:
+    description: 'An additional (optional) helm values file to be updated'
+    required: false
+  additional_values_path:
+    description: 'The path in the JSON for the value to be updated with the docker tag name'
+    required: false
+  deployment_repository_checkout_path:
+    description: 'The checkout path for the repository'
+    required: false
+    default: 'kubernetes-services'
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout Kubernetes Deployment Repository
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ inputs.deployment_repository }}
+        path: ${{ inputs.deployment_repository_checkout_path }}
+        ref: ${{ inputs.deployment_branch }}
+        token: ${{ inputs.deployment_repository_token }}
+
+    - name: Checkout the Branch
+      working-directory: ${{ inputs.deployment_repository_checkout_path }}
+      shell: bash
+      run: git checkout ${{ inputs.deployment_branch }}
+
+    - name: Update Services
+      uses: fjogeleit/yaml-update-action@main
+      with:
+        valueFile: ${{ inputs.values_file }}
+        propertyPath: ${{ inputs.values_path }}
+        value: ${{ inputs.docker_tag }}
+        workDir: ${{ inputs.deployment_repository_checkout_path }}
+        updateFile: true
+        commitChange: false
+        createPR: false
+
+    - name: Update Services (Additional)
+      uses: fjogeleit/yaml-update-action@main
+      if: ${{ inputs.additional_values_file != '' && inputs.additional_values_path != '' }}
+      with:
+        valueFile: ${{ inputs.additional_values_file }}
+        propertyPath: ${{ inputs.additional_values_path }}
+        value: ${{ inputs.docker_tag }}
+        workDir: ${{ inputs.deployment_repository_checkout_path }}
+        updateFile: true
+        commitChange: false
+        createPR: false
+
+    - name: Commit changes
+      shell: bash
+      working-directory: ${{ inputs.deployment_repository_checkout_path }}
+      run: |
+        git config http.sslVerify false
+        git config --local user.email "${{ inputs.author_email }}"
+        git config --local user.name "${{ inputs.author_name }}"
+        git add -A
+        git commit -m "${{ inputs.commit_message }}"
+        git push https://${GITHUB_ACTOR}:${{ inputs.deployment_repository_token }}@github.com/${{ inputs.deployment_repository }}.git
