@@ -55,30 +55,26 @@ runs:
       shell: bash
       run: git checkout ${{ inputs.deployment_branch }}
 
+    - name: Download dasel
+      run: wget https://github.com/TomWright/dasel/releases/download/v2.1.1/dasel_linux_amd64 -O dasel && chmod +x dasel && ./dasel --version
+      shell: bash
+      working-directory: ${{ inputs.deployment_repository_checkout_path }}
+
     - name: Update Services
-      uses: fjogeleit/yaml-update-action@main
-      with:
-        valueFile: ${{ inputs.values_file }}
-        workDir: ${{ inputs.deployment_repository_checkout_path }}
-        updateFile: true
-        commitChange: false
-        createPR: false
-        changes: |
-          {
-            "${{ inputs.values_path }}": "${{ inputs.docker_tag }}"
-          }
+      working-directory: ${{ inputs.deployment_repository_checkout_path }}
+      shell: bash
+      run: ./dasel put -t string -v ${{ inputs.docker_tag }} -f ${{ inputs.values_file }} -r yaml '${{ inputs.values_path }}'
 
     - name: Update Services (Additional)
-      uses: fjogeleit/yaml-update-action@main
       if: ${{ inputs.additional_values_file != '' && inputs.additional_values_path != '' }}
-      with:
-        valueFile: ${{ inputs.additional_values_file }}
-        propertyPath: ${{ inputs.additional_values_path }}
-        value: ${{ inputs.docker_tag }}
-        workDir: ${{ inputs.deployment_repository_checkout_path }}
-        updateFile: true
-        commitChange: false
-        createPR: false
+      working-directory: ${{ inputs.deployment_repository_checkout_path }}
+      shell: bash
+      run: ./dasel put -t string -v ${{ inputs.docker_tag }} -f ${{ inputs.additional_values_file }} -r yaml '${{ inputs.additional_values_path }}'
+
+    - name: Remove dasel
+      shell: bash
+      run: rm dasel
+      working-directory: ${{ inputs.deployment_repository_checkout_path }}
 
     - name: Commit changes
       shell: bash
