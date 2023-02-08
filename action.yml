@@ -59,12 +59,14 @@ runs:
       uses: fjogeleit/yaml-update-action@main
       with:
         valueFile: ${{ inputs.values_file }}
-        propertyPath: ${{ inputs.values_path }}
-        value: ${{ inputs.docker_tag }}
         workDir: ${{ inputs.deployment_repository_checkout_path }}
         updateFile: true
         commitChange: false
         createPR: false
+        changes: |
+          {
+            "${{ inputs.values_path }}": "${{ inputs.docker_tag }}"
+          }
 
     - name: Update Services (Additional)
       uses: fjogeleit/yaml-update-action@main
