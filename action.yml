@@ -84,5 +84,5 @@ runs:
         git config --local user.email "${{ inputs.author_email }}"
         git config --local user.name "${{ inputs.author_name }}"
         git add -A
-        git commit -m --allow-empty "${{ inputs.commit_message }}"
+        git commit --allow-empty -m `${{ inputs.commit_message }}`
         git push https://${GITHUB_ACTOR}:${{ inputs.deployment_repository_token }}@github.com/${{ inputs.deployment_repository }}.git
