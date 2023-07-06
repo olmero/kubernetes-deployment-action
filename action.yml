@@ -82,7 +82,7 @@ runs:
       with:
           source: ${{ inputs.commit_message }}
           find: '"'        
-          replace: '\"' 
+          replace: '' 
 
     - name: Commit changes
       shell: bash
