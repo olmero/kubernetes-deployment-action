@@ -83,6 +83,7 @@ runs:
           source: ${{ inputs.commit_message }}
           find: '"'        
           replace: '' 
+          replaceAll: true
 
     - name: Commit changes
       shell: bash
