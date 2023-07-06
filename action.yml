@@ -77,7 +77,7 @@ runs:
       working-directory: ${{ inputs.deployment_repository_checkout_path }}
       
     - name: Escape commit message
-      uses: mad9000/actions-find-and-replace-string@2
+      uses: mad9000/actions-find-and-replace-string@4
       id: escapedCommitMessage
       with:
           source: ${{ inputs.commit_message }}
